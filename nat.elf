@@ -42,6 +42,7 @@ length : string -> nat -> type.
 length/empty : length empty zero.
 
 %worlds () (length _ _).
+%total S (length S _).
 
 concat : string -> string -> string -> type.
 %mode concat +S1 +S2 -S3.
@@ -49,6 +50,7 @@ concat : string -> string -> string -> type.
 concat/empty : concat empty S S.
 
 %worlds () (concat _ _ _).
+%total S (concat S _ _).
 
 %% Let's run some queries to make sure that all of the things defined above
 %% work. I'll do this here to make sure I haven't silently shaddowed anything
