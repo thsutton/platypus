@@ -1,0 +1,58 @@
+% Let's start with the unary encoding of natural numbers.
+
+nat  : type.
+zero : nat.
+succ : nat -> nat.
+
+%% Here we're using following the "judgements as types" principle to encode
+%% the rules from PFPL (2nd) 2.2 with a type `nat` representing the judgement
+%% and application as the structural recursion.
+
+even : nat -> type.
+
+even/zero : even zero.
+even/succ : even N -> even (succ (succ N)).
+
+add : nat -> nat -> nat -> type.
+
+add/zero : add zero M M.
+add/succ : {N:nat}{M:nat}{P:nat} add (succ N) M (succ P) <- add N M P.
+
+%mode add +N +M -R.
+%worlds () (add _ _ _).
+%total N (add N _ _).
+
+times : nat -> nat -> nat -> type.
+
+times\z : times zero M zero.
+times\s : times (succ N) M P <- times N M Q <- add Q M P.
+
+%mode times +N +M -P.
+%worlds () (times _ _ _).
+%total N (times N _ _).
+
+%% Let's build some strings too.
+
+string : type.
+empty : string.
+
+length : string -> nat -> type.
+%mode length +S -N.
+
+length/empty : length empty zero.
+
+%worlds () (length _ _).
+
+concat : string -> string -> string -> type.
+%mode concat +S1 +S2 -S3.
+
+concat/empty : concat empty S S.
+
+%worlds () (concat _ _ _).
+
+%% Let's run some queries to make sure that all of the things defined above
+%% work. I'll do this here to make sure I haven't silently shaddowed anything
+%% on the way through.
+
+%query 1 1 add (succ (succ (succ zero))) (succ zero) N.
+%query 1 1 times (succ (succ zero)) (succ (succ zero)) N.

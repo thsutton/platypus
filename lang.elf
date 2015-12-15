@@ -1,0 +1,101 @@
+%% PLATYPUS - Meeting Eight
+
+% Let's start with the unary encoding of natural numbers.
+
+%% Let's build the abstract syntax for the terms of the language E from PFPL
+%% (2nd), 4.1. We'll use HOAS to represent the binding struture of the let
+%% operator.
+
+%% Our language has a single sort: expressions.
+EXP : type.
+
+%% Constructors for atomic values.
+num : nat -> EXP.
+str : string -> EXP.
+
+plus : EXP -> EXP -> EXP.
+mult : EXP -> EXP -> EXP.
+cat  : EXP -> EXP -> EXP.
+len  : EXP -> EXP.
+let  : EXP -> (EXP -> EXP) -> EXP.
+
+%% Types
+
+TYPE : type.
+numt : TYPE.
+strt : TYPE.
+
+%% Typing
+%%
+%% The oftp type represents the typing judgement defined by the rules 4.1 in
+%% PFPL (2nd) pp 36-37.
+
+oftp : EXP -> TYPE -> type.
+
+oftp/num : oftp (num N) numt.
+
+oftp/str : oftp (str S) strt.
+
+oftp/let : oftp (let E1 E2) T2
+	    <- oftp E1 T1
+	    <- {x : EXP} (oftp x T1 -> oftp (E2 x) T2).
+
+oftp/plus : oftp (plus E1 E2) numt
+	     <- oftp E1 numt
+	     <- oftp E2 numt.
+
+oftp/mult : oftp (mult E1 E2) numt
+	     <- oftp E1 numt
+	     <- oftp E2 numt.
+
+oftp/cat : oftp (cat E1 E2) strt
+	    <- oftp E1 strt
+	    <- oftp E2 strt.
+
+oftp/len : oftp (len E) numt
+	    <- oftp E strt.
+
+%% Evaluation
+%%
+
+val : EXP -> type.
+%mode val +E.
+
+val/num : {N:nat} val (num N).
+val/str : {S:string} val (str S).
+
+%worlds () (val _).
+
+eval : EXP -> EXP -> type.
+%mode eval +E1 -E2.
+
+eval\plus-l : eval (plus N M) (plus N1 M) <- eval N N1 <- val N1.
+eval\plus-r : eval (plus N M) (plus N M1) <- val N <- eval M M1 <- val M1.
+eval\plus   : eval (plus (num N) (num M)) (num O) <- add N M O.
+
+eval\mult-l : eval (mult N M) (mult N1 M) <- eval N N1 <- val N1.
+eval\mult-r : eval (mult N M) (mult N M1) <- val N <- eval M M1 <- val M1.
+eval\mult : eval (mult (num N) (num M)) (num P) <- times N M P.
+
+eval\cat-l : eval (cat S T) (cat S1 T) <- eval S S1 <- val S1.
+eval\cat-r : eval (cat S T) (cat S T1) <- val S <- eval T T1 <- val T1.
+eval\cat : eval (cat (str S) (str T)) (str U) <- concat S T U.
+
+eval\len-l : eval (len S) (len S1) <- eval S S1 <- val S1.
+eval\len : eval (len (str S)) (num N) <- length S N.
+
+eval\let-x : eval (let E F) (let E1 F) <- eval E E1 <- val E1.
+eval\let : eval (let E F) F1 <- val E <- eval (F E) F1.
+
+%mode eval +E -V.
+%worlds () (eval _ _).
+%total E (eval E _).
+
+%% Let's run some queries to make sure that all of the things defined above
+%% work. I'll do this here to make sure I haven't silently shaddowed anything
+%% on the way through.
+
+%query 1 1 add (succ (succ (succ zero))) (succ zero) N.
+%query 1 1 times (succ (succ zero)) (succ (succ zero)) N.
+%query 1 1 oftp (cat (str empty) (str empty)) T.
+%query 1 1 oftp (let (str empty) ([x] (len x))) T.
