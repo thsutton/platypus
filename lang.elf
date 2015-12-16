@@ -61,52 +61,54 @@ oftp/len : oftp (len E) numt
 val : EXP -> type.
 %mode val +E.
 
-val/num : {N:nat} val (num N).
-val/str : {S:string} val (str S).
+val/num : val (num N).
+val/str : val (str S).
 
 %worlds () (val _).
 
 eval : EXP -> EXP -> type.
-%mode eval +E1 -E2.
 
-eval\plus-l : eval (plus N M) (plus (num N1) M) <- eval N (num N1).
-eval\plus-r : eval (plus (num N) M) (plus (num N) (num M1))
-	       <- eval M (num M1).
-eval\plus   : eval (plus (num N) (num M)) (num O)
+eval/plus-l : eval (plus N M) (plus N1 M)
+	       <- eval N N1.
+eval/plus-r : eval (plus N M) (plus N M1)
+	       <- val N
+	       <- eval M M1.
+eval/plus   : eval (plus (num N) (num M)) (num O)
 	       <- add N M O.
 
-eval\mult-l : eval (mult N M) (mult (num N1) M)
-	       <- eval N (num N1).
-eval\mult-r : eval (mult (num N) M) (mult (num N) (num M1))
-	       <- eval M (num M1).
-eval\mult   : eval (mult (num N) (num M)) (num P)
+eval/mult-l : eval (mult N M) (mult N1 M)
+	       <- eval N N1
+	       <- val N1.
+eval/mult-r : eval (mult N M) (mult N M1)
+	       <- val N
+	       <- val M1
+	       <- eval M M1.
+eval/mult   : eval (mult (num N) (num M)) (num P)
 	       <- times N M P.
 
-eval\cat-l : eval (cat S T) (cat (str S1) T)
-	      <- eval S (str S1).
-eval\cat-r : eval (cat (str S) T) (cat (str S) (str T1))
-	      <- eval T (str T1).
-eval\cat   : eval (cat (str S) (str T)) (str U)
+eval/cat-l : eval (cat S T) (cat S1 T)
+	      <- val S1
+	      <- eval S S1.
+eval/cat-r : eval (cat S T) (cat S T1)
+	      <- val S
+	      <- val T1
+	      <- eval T T1.
+eval/cat   : eval (cat (str S) (str T)) (str U)
 	      <- concat S T U.
 
-eval\len-l : eval (len S) (len (str S1)) <- eval S (str S1).
-eval\len : eval (len (str S)) (num N) <- length S N.
+eval/len-l : eval (len S) (len S1)
+	      <- eval S S1
+	      <- val S1.
+eval/len : eval (len (str S)) (num N)
+	    <- length S N.
 
-%{
-eval\let-xs : eval (let E F) (let (str E1) F) <- eval E (str E1).
-eval\let-xn : eval (let E F) (let (num E1) F) <- eval E (num E1).
-eval\let-s  : eval (let (str E) F) F1 <- eval (F (str E)) F1.
-eval\let-n  : eval (let (num E) F) F1 <- eval (F (num E)) F1.
-}%
-
-eval\let : eval (let E F) F1 <- eval (F E) F1.
-
-eval\num : eval (num V) (num V).
-eval\str : eval (str V) (str V).
-
-%mode eval +E -V.
-%worlds () (eval _ _).
-%total E (eval E _).
+eval/let-x : eval (let E B) (let E1 B)
+	      <- eval E E1
+	      <- val E1.
+eval/let   : eval (let E B) R
+	      <- eval (B E) R
+	      <- val E
+	      <- val R.
 
 %% Let's run some queries to make sure that all of the things defined above
 %% work. I'll do this here to make sure I haven't silently shaddowed anything
@@ -116,3 +118,4 @@ eval\str : eval (str V) (str V).
 %query 1 1 times (succ (succ zero)) (succ (succ zero)) N.
 %query 1 1 oftp (cat (str empty) (str empty)) T.
 %query 1 1 oftp (let (str empty) ([x] (len x))) T.
+%query 1 1 D: eval (let (str empty) ([x] (len x))) T.

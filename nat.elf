@@ -24,8 +24,8 @@ add/succ : {N:nat}{M:nat}{P:nat} add (succ N) M (succ P) <- add N M P.
 
 times : nat -> nat -> nat -> type.
 
-times\z : times zero M zero.
-times\s : times (succ N) M P <- times N M Q <- add Q M P.
+times/z : times zero M zero.
+times/s : times (succ N) M P <- times N M Q <- add Q M P.
 
 %mode times +N +M -P.
 %worlds () (times _ _ _).
@@ -56,5 +56,5 @@ concat/empty : concat empty S S.
 %% work. I'll do this here to make sure I haven't silently shaddowed anything
 %% on the way through.
 
-%query 1 1 add (succ (succ (succ zero))) (succ zero) N.
-%query 1 1 times (succ (succ zero)) (succ (succ zero)) N.
+%query 1 1 D : add (succ (succ (succ zero))) (succ zero) N.
+%query 1 1 D : times (succ (succ zero)) (succ (succ zero)) N.
