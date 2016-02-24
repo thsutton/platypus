@@ -119,3 +119,4 @@ eval/let   : eval (let E B) R
 %query 1 1 oftp (cat (str empty) (str empty)) T.
 %query 1 1 oftp (let (str empty) ([x] (len x))) T.
 %query 1 1 D: eval (let (str empty) ([x] (len x))) T.
+%query 1 1 D: eval (let (num (succ zero)) ([x] (plus x x))) T.

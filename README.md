@@ -1,4 +1,7 @@
 PLATYPUS
 ========
 
-This is the code I've written for the PLATYPUS type theory study group.
+This is code I've written for the [Sydney Type Theory Study Group][1].
+
+[1]: http://www.meetup.com/Sydney-Type-Theory/
+
