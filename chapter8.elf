@@ -1,0 +1,105 @@
+%% Chapter 8 of Practical Foundations for Programming Languages
+
+ty : type.
+tnum : ty.
+tstr : ty.
+arr : ty -> ty -> ty.
+
+exp : type.
+num : nat -> exp.
+str : string -> exp.
+plus : exp -> exp -> exp.
+len : exp -> exp.
+let : exp -> (exp -> exp) -> exp.
+lam : (exp -> exp) -> exp.
+app : exp -> (exp -> exp).
+
+ofty : exp -> ty -> type.
+
+ofty/num : ofty (num N) tnum.
+
+ofty/str : ofty (str S) tstr.
+
+ofty/plus : ofty (plus N1 N2) tnum
+	     <- ofty N1 tnum
+	     <- ofty N2 tnum.
+
+ofty/len : ofty (len S) tnum
+	    <- ofty S tstr.
+
+ofty/let : ofty (let E1 E2) T2
+	    <- ofty E1 T1
+	    <- {x : exp} {d : ofty x T1} ofty (E2 x) T2.
+
+ofty/lam : ofty (lam E) (arr T1 T2)
+	    <- {x : exp} {d : ofty x T1} ofty (E x) T2.
+
+ofty/app : ofty (app E1 E2) T
+	    <- ofty E1 (arr T2 T)
+	    <- ofty E2 T2.
+
+%%
+%% Evaluation
+%%
+
+val : exp -> type.
+
+val/num : val (num N).
+
+val/str : val (str S).
+
+val/lam : val (lam E).
+
+ev : exp -> exp -> type.
+
+ev/plus1 : ev (plus N1 N2) (plus N1' N2)
+	    <- ev N1 N1'.
+ev/plus2 : ev (plus N1 N2) (plus N1 N2')
+	    <- ev N2 N2'.
+ev/plus : ev (plus (num N1) (num N2)) (num N3)
+	   <- add N1 N2 N3.
+
+ev/app1 : ev (app E1 E2) (app E1' E2)
+	   <- ev E1 E1'.
+
+ev/app-lam : ev (app (lam E1) E2) (E1 E2).
+
+%%
+%% Proofs
+%%
+
+%% Preservation.
+
+
+%% Progress.
+
+eprogress : exp -> type.
+
+eprogress/val : eprogress E
+		 <- val E.
+eprogress/step : eprogress E
+		  <- ev E E'.
+
+progress : {E : exp} ofty E T -> eprogress E -> type.
+
+progress/num : progress (num N) ofty/num (eprogress/val val/num).
+progress/str : progress (str S) ofty/str (eprogress/val val/str).
+progress/lam : progress (lam E) (ofty/lam D) (eprogress/val val/lam).
+
+progress/plus1 : progress (plus N1 N2) (ofty/plus D2 D1) (eprogress/step (ev/plus1 Dn1))
+		  <- progress N1 D1 (eprogress/step Dn1).
+progress/plus2 : progress (plus N1 N2) (ofty/plus D2 D1) (eprogress/step (ev/plus2 Dn2))
+		  <- progress N2 D2 (eprogress/step Dn2).
+progress/plus : progress (plus (num N1) (num N2)) (ofty/plus D2 D1) (eprogress/step Dp1)
+		 <- progress (plus (num N1) (num N2)) (ofty/plus D2 D1) (eprogress/step Dp1).
+
+progress/app1 : progress (app E1 E2) (ofty/app D2 D1) (eprogress/step (ev/app1 Dev1))
+		 <- progress E1 D1 (eprogress/step Dev1).
+progress/app2 : progress (app (lam E1) E2) (ofty/app D2 D1) (eprogress/step ev/app-lam)
+		 <- progress (lam E1) D1 (eprogress/val Dev1).
+
+
+plus : exp -> exp -> exp.
+len : exp -> exp.
+let : exp -> (exp -> exp) -> exp.
+app : exp -> (exp -> exp).
